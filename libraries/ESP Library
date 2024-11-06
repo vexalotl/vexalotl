@@ -1,1 +1,626 @@
-
+local a = game:GetService("RunService")
+local b = game:GetService("Players")
+local c = game:GetService("Workspace")
+local d = b.LocalPlayer
+local e = c.CurrentCamera
+local f = e.ViewportSize
+local g = Instance.new("Folder", gethui and gethui() or game:GetService("CoreGui"))
+local h = math.floor
+local i = math.round
+local j = math.sin
+local k = math.cos
+local l = table.clear
+local m = table.unpack
+local n = table.find
+local o = table.create
+local p = CFrame.fromMatrix
+local q = e.WorldToViewportPoint
+local r = c.IsA
+local s = c.GetPivot
+local t = c.FindFirstChild
+local u = c.GetChildren
+local v = CFrame.identity.PointToObjectSpace
+local w = Color3.new().Lerp
+local x = Vector2.zero.Min
+local y = Vector2.zero.Max
+local z = Vector2.zero.Lerp
+local A = Vector3.zero.Min
+local B = Vector3.zero.Max
+local C = Vector2.new(5, 0)
+local D = Vector2.new(3, 0)
+local E = Vector2.new(0, 1)
+local F = Vector2.new(0, 2)
+local G = Vector2.new(0, 2)
+local H = {
+    Vector3.new(-1, -1, -1),
+    Vector3.new(-1, 1, -1),
+    Vector3.new(-1, 1, 1),
+    Vector3.new(-1, -1, 1),
+    Vector3.new(1, -1, -1),
+    Vector3.new(1, 1, -1),
+    Vector3.new(1, 1, 1),
+    Vector3.new(1, -1, 1)
+}
+local function I(J)
+    return J == "Head" or J:find("Torso") or J:find("Leg") or J:find("Arm")
+end
+local function K(L)
+    local M, N
+    for O = 1, #L do
+        local P = L[O]
+        local Q, R = P.CFrame, P.Size
+        M = A(M or Q.Position, (Q - R * 0.5).Position)
+        N = B(N or Q.Position, (Q + R * 0.5).Position)
+    end
+    local S = (M + N) * 0.5
+    local T = Vector3.new(S.X, S.Y, N.Z)
+    return CFrame.new(S, T), N - M
+end
+local function U(V)
+    local W, X = q(e, V)
+    return Vector2.new(W.X, W.Y), X, W.Z
+end
+local function Y(Q, R)
+    local Z = o(#H)
+    for O = 1, #H do
+        Z[O] = U((Q + R * 0.5 * H[O]).Position)
+    end
+    local M = x(f, m(Z))
+    local N = y(Vector2.zero, m(Z))
+    return {
+        corners = Z,
+        topLeft = Vector2.new(h(M.X), h(M.Y)),
+        topRight = Vector2.new(h(N.X), h(M.Y)),
+        bottomLeft = Vector2.new(h(M.X), h(N.Y)),
+        bottomRight = Vector2.new(h(N.X), h(N.Y))
+    }
+end
+local function _(a0, a1)
+    local a2, a3 = a0.X, a0.Y
+    local a4, a5 = k(a1), j(a1)
+    return Vector2.new(a2 * a4 - a3 * a5, a2 * a5 + a3 * a4)
+end
+local function a6(self, a7, a8)
+    if a7 == "Team Color" or self.interface.sharedSettings.useTeamColor and not a8 then
+        return self.interface.getTeamColor(self.player) or Color3.new(1, 1, 1)
+    end
+    return a7
+end
+local a9 = {}
+a9.__index = a9
+function a9.new(aa, ab)
+    local self = setmetatable({}, a9)
+    self.player = assert(aa, "Missing argument #1 (Player expected)")
+    self.interface = assert(ab, "Missing argument #2 (table expected)")
+    self:Construct()
+    return self
+end
+function a9:_create(ac, ad)
+    local ae = Drawing.new(ac)
+    for af, ag in next, ad do
+        pcall(
+            function()
+                ae[af] = ag
+            end
+        )
+    end
+    self.bin[#self.bin + 1] = ae
+    return ae
+end
+function a9:Construct()
+    self.charCache = {}
+    self.childCount = 0
+    self.bin = {}
+    self.drawings = {
+        box3d = {
+            {
+                self:_create("Line", {Thickness = 1, Visible = false}),
+                self:_create("Line", {Thickness = 1, Visible = false}),
+                self:_create("Line", {Thickness = 1, Visible = false})
+            },
+            {
+                self:_create("Line", {Thickness = 1, Visible = false}),
+                self:_create("Line", {Thickness = 1, Visible = false}),
+                self:_create("Line", {Thickness = 1, Visible = false})
+            },
+            {
+                self:_create("Line", {Thickness = 1, Visible = false}),
+                self:_create("Line", {Thickness = 1, Visible = false}),
+                self:_create("Line", {Thickness = 1, Visible = false})
+            },
+            {
+                self:_create("Line", {Thickness = 1, Visible = false}),
+                self:_create("Line", {Thickness = 1, Visible = false}),
+                self:_create("Line", {Thickness = 1, Visible = false})
+            }
+        },
+        visible = {
+            tracerOutline = self:_create("Line", {Thickness = 3, Visible = false}),
+            tracer = self:_create("Line", {Thickness = 1, Visible = false}),
+            boxFill = self:_create("Square", {Filled = true, Visible = false}),
+            boxOutline = self:_create("Square", {Thickness = 3, Visible = false}),
+            box = self:_create("Square", {Thickness = 1, Visible = false}),
+            healthBarOutline = self:_create("Line", {Thickness = 3, Visible = false}),
+            healthBar = self:_create("Line", {Thickness = 1, Visible = false}),
+            healthText = self:_create("Text", {Center = true, Visible = false}),
+            name = self:_create("Text", {Text = self.player.DisplayName, Center = true, Visible = false}),
+            distance = self:_create("Text", {Center = true, Visible = false}),
+            weapon = self:_create("Text", {Center = true, Visible = false})
+        },
+        hidden = {
+            arrowOutline = self:_create("Triangle", {Thickness = 3, Visible = false}),
+            arrow = self:_create("Triangle", {Filled = true, Visible = false})
+        }
+    }
+    self.renderConnection =
+        a.Heartbeat:Connect(
+        function(ah)
+            self:Update(ah)
+            self:Render(ah)
+        end
+    )
+end
+function a9:Destruct()
+    self.renderConnection:Disconnect()
+    for O = 1, #self.bin do
+        self.bin[O]:Remove()
+    end
+    l(self)
+end
+function a9:Update()
+    local ab = self.interface
+    self.options = ab.teamSettings[ab.isFriendly(self.player) and "friendly" or "enemy"]
+    self.character = ab.getCharacter(self.player)
+    self.health, self.maxHealth = ab.getHealth(self.player)
+    self.weapon = ab.getWeapon(self.player)
+    self.enabled =
+        self.options.enabled and self.character and not (#ab.whitelist > 0 and not n(ab.whitelist, self.player.UserId))
+    local ai = self.enabled and t(self.character, "Head")
+    if not ai then
+        self.charCache = {}
+        self.onScreen = false
+        return
+    end
+    local aj, ak, al = U(ai.Position)
+    self.onScreen = ak
+    self.distance = al
+    if ab.sharedSettings.limitDistance and al > ab.sharedSettings.maxDistance then
+        self.onScreen = false
+    end
+    if self.onScreen then
+        local am = self.charCache
+        local an = u(self.character)
+        if not am[1] or self.childCount ~= #an then
+            l(am)
+            for O = 1, #an do
+                local P = an[O]
+                if r(P, "BasePart") and I(P.Name) then
+                    am[#am + 1] = P
+                end
+            end
+            self.childCount = #an
+        end
+        self.corners = Y(K(am))
+    elseif self.options.offScreenArrow then
+        local Q = e.CFrame
+        local ao = p(Q.Position, Q.RightVector, Vector3.yAxis)
+        local ap = v(ao, ai.Position)
+        self.direction = Vector2.new(ap.X, ap.Z).Unit
+    end
+end
+function a9:Render()
+    local ak = self.onScreen or false
+    local aq = self.enabled or false
+    local ar = self.drawings.visible
+    local as = self.drawings.hidden
+    local at = self.drawings.box3d
+    local ab = self.interface
+    local au = self.options
+    local Z = self.corners
+    ar.box.Visible = aq and ak and au.box
+    ar.boxOutline.Visible = ar.box.Visible and au.boxOutline
+    if ar.box.Visible then
+        local av = ar.box
+        av.Position = Z.topLeft
+        av.Size = Z.bottomRight - Z.topLeft
+        av.Color = a6(self, au.boxColor[1])
+        av.Transparency = au.boxColor[2]
+        local aw = ar.boxOutline
+        aw.Position = av.Position
+        aw.Size = av.Size
+        aw.Color = a6(self, au.boxOutlineColor[1], true)
+        aw.Transparency = au.boxOutlineColor[2]
+    end
+    ar.boxFill.Visible = aq and ak and au.boxFill
+    if ar.boxFill.Visible then
+        local ax = ar.boxFill
+        ax.Position = Z.topLeft
+        ax.Size = Z.bottomRight - Z.topLeft
+        ax.Color = a6(self, au.boxFillColor[1])
+        ax.Transparency = au.boxFillColor[2]
+    end
+    ar.healthBar.Visible = aq and ak and au.healthBar
+    ar.healthBarOutline.Visible = ar.healthBar.Visible and au.healthBarOutline
+    if ar.healthBar.Visible then
+        local ay = Z.topLeft - C
+        local az = Z.bottomLeft - C
+        local aA = ar.healthBar
+        aA.To = az
+        aA.From = z(az, ay, self.health / self.maxHealth)
+        aA.Color = w(au.dyingColor, au.healthyColor, self.health / self.maxHealth)
+        local aB = ar.healthBarOutline
+        aB.To = az + E
+        aB.From = ay - E
+        aB.Color = a6(self, au.healthBarOutlineColor[1], true)
+        aB.Transparency = au.healthBarOutlineColor[2]
+    end
+    ar.healthText.Visible = aq and ak and au.healthText
+    if ar.healthText.Visible then
+        local ay = Z.topLeft - C
+        local az = Z.bottomLeft - C
+        local aC = ar.healthText
+        aC.Text = i(self.health) .. "hp"
+        aC.Size = ab.sharedSettings.textSize
+        aC.Font = ab.sharedSettings.textFont
+        aC.Color = a6(self, au.healthTextColor[1])
+        aC.Transparency = au.healthTextColor[2]
+        aC.Outline = au.healthTextOutline
+        aC.OutlineColor = a6(self, au.healthTextOutlineColor, true)
+        aC.Position = z(az, ay, self.health / self.maxHealth) - aC.TextBounds * 0.5 - D
+    end
+    ar.name.Visible = aq and ak and au.name
+    if ar.name.Visible then
+        local J = ar.name
+        J.Size = ab.sharedSettings.textSize
+        J.Font = ab.sharedSettings.textFont
+        J.Color = a6(self, au.nameColor[1])
+        J.Transparency = au.nameColor[2]
+        J.Outline = au.nameOutline
+        J.OutlineColor = a6(self, au.nameOutlineColor, true)
+        J.Position = (Z.topLeft + Z.topRight) * 0.5 - Vector2.yAxis * J.TextBounds.Y - F
+    end
+    ar.distance.Visible = aq and ak and self.distance and au.distance
+    if ar.distance.Visible then
+        local aD = ar.distance
+        aD.Text = i(self.distance) .. " studs"
+        aD.Size = ab.sharedSettings.textSize
+        aD.Font = ab.sharedSettings.textFont
+        aD.Color = a6(self, au.distanceColor[1])
+        aD.Transparency = au.distanceColor[2]
+        aD.Outline = au.distanceOutline
+        aD.OutlineColor = a6(self, au.distanceOutlineColor, true)
+        aD.Position = (Z.bottomLeft + Z.bottomRight) * 0.5 + G
+    end
+    ar.weapon.Visible = aq and ak and au.weapon
+    if ar.weapon.Visible then
+        local aE = ar.weapon
+        aE.Text = self.weapon
+        aE.Size = ab.sharedSettings.textSize
+        aE.Font = ab.sharedSettings.textFont
+        aE.Color = a6(self, au.weaponColor[1])
+        aE.Transparency = au.weaponColor[2]
+        aE.Outline = au.weaponOutline
+        aE.OutlineColor = a6(self, au.weaponOutlineColor, true)
+        aE.Position =
+            (Z.bottomLeft + Z.bottomRight) * 0.5 +
+            (ar.distance.Visible and G + Vector2.yAxis * ar.distance.TextBounds.Y or Vector2.zero)
+    end
+    ar.tracer.Visible = aq and ak and au.tracer
+    ar.tracerOutline.Visible = ar.tracer.Visible and au.tracerOutline
+    if ar.tracer.Visible then
+        local aF = ar.tracer
+        aF.Color = a6(self, au.tracerColor[1])
+        aF.Transparency = au.tracerColor[2]
+        aF.To = (Z.bottomLeft + Z.bottomRight) * 0.5
+        aF.From =
+            au.tracerOrigin == "Middle" and f * 0.5 or au.tracerOrigin == "Top" and f * Vector2.new(0.5, 0) or
+            au.tracerOrigin == "Bottom" and f * Vector2.new(0.5, 1)
+        local aG = ar.tracerOutline
+        aG.Color = a6(self, au.tracerOutlineColor[1], true)
+        aG.Transparency = au.tracerOutlineColor[2]
+        aG.To = aF.To
+        aG.From = aF.From
+    end
+    as.arrow.Visible = aq and not ak and au.offScreenArrow
+    as.arrowOutline.Visible = as.arrow.Visible and au.offScreenArrowOutline
+    if as.arrow.Visible and self.direction then
+        local aH = as.arrow
+        aH.PointA = x(y(f * 0.5 + self.direction * au.offScreenArrowRadius, Vector2.one * 25), f - Vector2.one * 25)
+        aH.PointB = aH.PointA - _(self.direction, 0.45) * au.offScreenArrowSize
+        aH.PointC = aH.PointA - _(self.direction, -0.45) * au.offScreenArrowSize
+        aH.Color = a6(self, au.offScreenArrowColor[1])
+        aH.Transparency = au.offScreenArrowColor[2]
+        local aI = as.arrowOutline
+        aI.PointA = aH.PointA
+        aI.PointB = aH.PointB
+        aI.PointC = aH.PointC
+        aI.Color = a6(self, au.offScreenArrowOutlineColor[1], true)
+        aI.Transparency = au.offScreenArrowOutlineColor[2]
+    end
+    local aJ = aq and ak and au.box3d
+    for O = 1, #at do
+        local aK = at[O]
+        for aL = 1, #aK do
+            local aM = aK[aL]
+            aM.Visible = aJ
+            aM.Color = a6(self, au.box3dColor[1])
+            aM.Transparency = au.box3dColor[2]
+        end
+        if aJ then
+            local aN = aK[1]
+            aN.From = Z.corners[O]
+            aN.To = Z.corners[O == 4 and 1 or O + 1]
+            local aO = aK[2]
+            aO.From = Z.corners[O == 4 and 1 or O + 1]
+            aO.To = Z.corners[O == 4 and 5 or O + 5]
+            local aP = aK[3]
+            aP.From = Z.corners[O == 4 and 5 or O + 5]
+            aP.To = Z.corners[O == 4 and 8 or O + 4]
+        end
+    end
+end
+local aQ = {}
+aQ.__index = aQ
+function aQ.new(aa, ab)
+    local self = setmetatable({}, aQ)
+    self.player = assert(aa, "Missing argument #1 (Player expected)")
+    self.interface = assert(ab, "Missing argument #2 (table expected)")
+    self:Construct()
+    return self
+end
+function aQ:Construct()
+    self.highlight = Instance.new("Highlight", g)
+    self.updateConnection =
+        a.Heartbeat:Connect(
+        function()
+            self:Update()
+        end
+    )
+end
+function aQ:Destruct()
+    self.updateConnection:Disconnect()
+    self.highlight:Destroy()
+    l(self)
+end
+function aQ:Update()
+    local aR = self.highlight
+    local ab = self.interface
+    local aS = ab.getCharacter(self.player)
+    local au = ab.teamSettings[ab.isFriendly(self.player) and "friendly" or "enemy"]
+    local aq = au.enabled and aS and not (#ab.whitelist > 0 and not n(ab.whitelist, self.player.UserId))
+    aR.Enabled = aq and au.chams
+    if aR.Enabled then
+        aR.Adornee = aS
+        aR.FillColor = a6(self, au.chamsFillColor[1])
+        aR.FillTransparency = au.chamsFillColor[2]
+        aR.OutlineColor = a6(self, au.chamsOutlineColor[1], true)
+        aR.OutlineTransparency = au.chamsOutlineColor[2]
+        aR.DepthMode = au.chamsVisibleOnly and "Occluded" or "AlwaysOnTop"
+    end
+end
+local aT = {}
+aT.__index = aT
+function aT.new(aU, au)
+    local self = setmetatable({}, aT)
+    self.instance = assert(aU, "Missing argument #1 (Instance Expected)")
+    self.options = assert(au, "Missing argument #2 (table expected)")
+    self:Construct()
+    return self
+end
+function aT:Construct()
+    local au = self.options
+    au.enabled = au.enabled == nil and true or au.enabled
+    au.text = au.text or "{name}"
+    au.textColor = au.textColor or {Color3.new(1, 1, 1), 1}
+    au.textOutline = au.textOutline == nil and true or au.textOutline
+    au.textOutlineColor = au.textOutlineColor or Color3.new()
+    au.textSize = au.textSize or 13
+    au.textFont = au.textFont or 2
+    au.limitDistance = au.limitDistance or false
+    au.maxDistance = au.maxDistance or 150
+    self.text = Drawing.new("Text")
+    self.text.Center = true
+    self.renderConnection =
+        a.Heartbeat:Connect(
+        function(ah)
+            self:Render(ah)
+        end
+    )
+end
+function aT:Destruct()
+    self.renderConnection:Disconnect()
+    self.text:Remove()
+end
+function aT:Render()
+    local aU = self.instance
+    if not aU or not aU.Parent then
+        return self:Destruct()
+    end
+    local aV = self.text
+    local au = self.options
+    if not au.enabled then
+        aV.Visible = false
+        return
+    end
+    local V = s(aU).Position
+    local aW, ar, al = U(V)
+    if au.limitDistance and al > au.maxDistance then
+        ar = false
+    end
+    aV.Visible = ar
+    if aV.Visible then
+        aV.Position = aW
+        aV.Color = au.textColor[1]
+        aV.Transparency = au.textColor[2]
+        aV.Outline = au.textOutline
+        aV.OutlineColor = au.textOutlineColor
+        aV.Size = au.textSize
+        aV.Font = au.textFont
+        aV.Text = au.text:gsub("{name}", aU.Name):gsub("{distance}", i(al)):gsub("{position}", tostring(V))
+    end
+end
+local aX = {
+    _hasLoaded = false,
+    _objectCache = {},
+    whitelist = {},
+    sharedSettings = {textSize = 13, textFont = 2, limitDistance = false, maxDistance = 150, useTeamColor = false},
+    teamSettings = {
+        enemy = {
+            enabled = true,
+            box = false,
+            boxColor = {Color3.new(1, 0, 0), 1},
+            boxOutline = true,
+            boxOutlineColor = {Color3.new(), 1},
+            boxFill = false,
+            boxFillColor = {Color3.new(1, 0, 0), 0.5},
+            healthBar = true,
+            healthyColor = Color3.new(0, 1, 0),
+            dyingColor = Color3.new(1, 0, 0),
+            healthBarOutline = true,
+            healthBarOutlineColor = {Color3.new(), 0.5},
+            healthText = true,
+            healthTextColor = {Color3.new(0, 1, 0), 1},
+            healthTextOutline = true,
+            healthTextOutlineColor = Color3.new(),
+            box3d = true,
+            box3dColor = {Color3.new(1, 1, 1), 1},
+            name = false,
+            nameColor = {Color3.new(1, 1, 1), 1},
+            nameOutline = true,
+            nameOutlineColor = Color3.new(),
+            weapon = false,
+            weaponColor = {Color3.new(1, 1, 1), 1},
+            weaponOutline = true,
+            weaponOutlineColor = Color3.new(),
+            distance = true,
+            distanceColor = {Color3.new(1, 1, 1), 1},
+            distanceOutline = true,
+            distanceOutlineColor = Color3.new(),
+            tracer = true,
+            tracerOrigin = "Bottom",
+            tracerColor = {Color3.new(1, 1, 1), 1},
+            tracerOutline = true,
+            tracerOutlineColor = {Color3.new(), 1},
+            offScreenArrow = false,
+            offScreenArrowColor = {Color3.new(1, 1, 1), 1},
+            offScreenArrowSize = 15,
+            offScreenArrowRadius = 150,
+            offScreenArrowOutline = true,
+            offScreenArrowOutlineColor = {Color3.new(), 1},
+            chams = true,
+            chamsVisibleOnly = false,
+            chamsFillColor = {Color3.new(0.2, 0.2, 0.2), 0.5},
+            chamsOutlineColor = {Color3.new(1, 0, 0), 0}
+        },
+        friendly = {
+            enabled = false,
+            box = false,
+            boxColor = {Color3.new(0, 1, 0), 1},
+            boxOutline = true,
+            boxOutlineColor = {Color3.new(), 1},
+            boxFill = false,
+            boxFillColor = {Color3.new(0, 1, 0), 0.5},
+            healthBar = true,
+            healthyColor = Color3.new(0, 1, 0),
+            dyingColor = Color3.new(1, 0, 0),
+            healthBarOutline = true,
+            healthBarOutlineColor = {Color3.new(), 0.5},
+            healthText = true,
+            healthTextColor = {Color3.new(0, 1, 0), 1},
+            healthTextOutline = true,
+            healthTextOutlineColor = Color3.new(),
+            box3d = true,
+            box3dColor = {Color3.new(1, 1, 1), 1},
+            name = true,
+            nameColor = {Color3.new(1, 1, 1), 1},
+            nameOutline = true,
+            nameOutlineColor = Color3.new(),
+            weapon = false,
+            weaponColor = {Color3.new(1, 1, 1), 1},
+            weaponOutline = true,
+            weaponOutlineColor = Color3.new(),
+            distance = true,
+            distanceColor = {Color3.new(1, 1, 1), 1},
+            distanceOutline = true,
+            distanceOutlineColor = Color3.new(),
+            tracer = true,
+            tracerOrigin = "Bottom",
+            tracerColor = {Color3.new(0, 1, 0), 1},
+            tracerOutline = true,
+            tracerOutlineColor = {Color3.new(), 1},
+            offScreenArrow = true,
+            offScreenArrowColor = {Color3.new(1, 1, 1), 1},
+            offScreenArrowSize = 15,
+            offScreenArrowRadius = 150,
+            offScreenArrowOutline = true,
+            offScreenArrowOutlineColor = {Color3.new(), 1},
+            chams = true,
+            chamsVisibleOnly = false,
+            chamsFillColor = {Color3.new(0.2, 0.2, 0.2), 0.5},
+            chamsOutlineColor = {Color3.new(0, 1, 0), 0}
+        }
+    }
+}
+function aX.AddInstance(aU, au)
+    local am = aX._objectCache
+    if am[aU] then
+        warn("Instance handler already exists.")
+    else
+        am[aU] = {aT.new(aU, au)}
+    end
+    return am[aU][1]
+end
+function aX.Load()
+    assert(not aX._hasLoaded, "Esp has already been loaded.")
+    local function aY(aa)
+        aX._objectCache[aa] = {a9.new(aa, aX), aQ.new(aa, aX)}
+    end
+    local function aZ(aa)
+        local a_ = aX._objectCache[aa]
+        if a_ then
+            for O = 1, #a_ do
+                a_[O]:Destruct()
+            end
+            aX._objectCache[aa] = nil
+        end
+    end
+    local b0 = b:GetPlayers()
+    for O = 2, #b0 do
+        aY(b0[O])
+    end
+    aX.playerAdded = b.PlayerAdded:Connect(aY)
+    aX.playerRemoving = b.PlayerRemoving:Connect(aZ)
+    aX._hasLoaded = true
+end
+function aX.Unload()
+    assert(aX._hasLoaded, "Esp has not been loaded yet.")
+    for b1, a_ in next, aX._objectCache do
+        for O = 1, #a_ do
+            a_[O]:Destruct()
+        end
+        aX._objectCache[b1] = nil
+    end
+    aX.playerAdded:Disconnect()
+    aX.playerRemoving:Disconnect()
+    aX._hasLoaded = false
+end
+function aX.getWeapon(aa)
+    return "Unknown"
+end
+function aX.isFriendly(aa)
+    return aa.Team and aa.Team == d.Team
+end
+function aX.getTeamColor(aa)
+    return aa.Team and aa.Team.TeamColor and aa.Team.TeamColor.Color
+end
+function aX.getCharacter(aa)
+    return aa.Character
+end
+function aX.getHealth(aa)
+    local aS = aa.Character
+    if aS then
+        return aS.Data:GetAttribute("h"), aS.Data:GetAttribute("mh")
+    end
+    return 100, 100
+end
+return aX
