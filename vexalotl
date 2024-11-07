@@ -1,1 +1,5 @@
-game.Players.LocalPlayer:Kick("\n\nOutdated script detected\n The version you're using is outdated. Please head over to https://discord.gg/vexalotl for the latest version of Vexalotl Hub. \n\nIf that link doesn't work, use this permanent link: https://discord.gg/qDcYHvnHRC \n\nBackup link: https://discord.gg/9cKDhZftfh")
+if game.GameId == 1831550657 then
+    game.Players.LocalPlayer:Kick("\n\nOutdated script detected\n The version you're using is outdated. Please head over to https://discord.gg/vexalotl for the latest version of Vexalotl Hub. \n\nIf that link doesn't work, use this permanent link: https://discord.gg/qDcYHvnHRC \n\nBackup link: https://discord.gg/9cKDhZftfh")
+else
+    warn("Outdated script detected \n\nThe version you're using is outdated. Please head over to https://discord.gg/vexalotl for the latest version of Vexalotl Hub. If that link doesn't work, use this permanent link: https://discord.gg/qDcYHvnHRC - Backup link: https://discord.gg/9cKDhZftfh")
+end
