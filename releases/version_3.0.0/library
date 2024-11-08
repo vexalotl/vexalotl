@@ -1845,21 +1845,41 @@ function Library.new(windowName: string, constrainToScreen: boolean?, width: num
 		end
 	end
 
-	local function onHeadingMouseDown()
-		local mouseMovedConnection = mouse.Move:Connect(updateWindowPos)
+	local function onHeadingMouseDown(input)
+		local mouseMovedConnection
 		local inputEndedConnection
 
-		startDragMousePos = Vector2.new(mouse.X, mouse.Y)
+		-- Capture the initial drag positions
+		startDragMousePos = Vector2.new(input.Position.X, input.Position.Y)
 		startDragWindowPos = Vector2.new(background.Position.X.Offset, background.Position.Y.Offset)
 		updateWindowPos()
 
-		inputEndedConnection = UserInputService.InputEnded:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		-- Handle dragging movement
+		mouseMovedConnection = UserInputService.InputChanged:Connect(function(inputChanged)
+			if inputChanged.UserInputType == Enum.UserInputType.MouseMovement or inputChanged.UserInputType == Enum.UserInputType.Touch then
+				updateWindowPos()
+			end
+		end)
+
+		-- Stop dragging when input ends (mouse or touch)
+		inputEndedConnection = UserInputService.InputEnded:Connect(function(inputEnded)
+			if inputEnded.UserInputType == Enum.UserInputType.MouseButton1 or inputEnded.UserInputType == Enum.UserInputType.Touch then
 				mouseMovedConnection:Disconnect()
 				inputEndedConnection:Disconnect()
 			end
 		end)
 	end
+
+	-- Mobile (touch) and desktop (mouse) support for dragging
+	heading.InputBegan:Connect(function(input, gameProcessedEvent)
+		if gameProcessedEvent then return end
+		
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			onHeadingMouseDown(input)
+		end
+	end)
+
+	-- Existing functions (closeWindow, minimizeWindow, maximizeWindow) go unchanged
 
 	local function closeWindow()
         local closeWindowTween = TweenService:Create(windowInstance.Background, TweenInfo.new(.15, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0,0,0,0)})
@@ -1902,7 +1922,6 @@ function Library.new(windowName: string, constrainToScreen: boolean?, width: num
 	local function maximizeWindow()
 		window.IsMinimized = false
 		local backgroundAbsPos = background.AbsolutePosition
-		local backgroundAbsSize = background.AbsoluteSize
 		local maximizeWindowRightTween = TweenService:Create(background, TweenInfo.new(.2, Enum.EasingStyle.Linear), {Size = UDim2.new(0,minimizedLongBarOriginialSize.X,0,minimizedLongBarOriginialSize.Y), Position = UDim2.new(0, backgroundAbsPos.X + minimizedLongBarOriginialSize.X / 2,0,backgroundAbsPos.Y + minimizedLongBarOriginialSize.Y / 2 + 36)})
 		local maximizePlusImageTween = TweenService:Create(buttonHolder.Plus, TweenInfo.new(.2, Enum.EasingStyle.Linear), {Rotation = 180, ImageTransparency = 1})
 		local maximizeMinusImageTween = TweenService:Create(buttonHolder.Minus, TweenInfo.new(.2, Enum.EasingStyle.Linear), {Rotation = 0, ImageTransparency = 0})
@@ -1922,6 +1941,7 @@ function Library.new(windowName: string, constrainToScreen: boolean?, width: num
 		maximizePlusImageTween:Play()
 	end
 
+	-- Additional properties and connections remain unchanged
 	if constrainToScreen == nil then
 		constrainToScreen = true
 	end
@@ -1980,6 +2000,7 @@ function Library.new(windowName: string, constrainToScreen: boolean?, width: num
 	
 	return window
 end
+
 
 function windowHandler:LockScreenBoundaries(constrainWindowToScreenBoundaries)
 	self.isConstraintedToScreenBoundaries = constrainWindowToScreenBoundaries
