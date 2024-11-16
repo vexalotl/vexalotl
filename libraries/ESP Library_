@@ -222,7 +222,7 @@ function a9:Render()
         local aA = ar.healthBar
         aA.To = az
         aA.From = Vector2.zero.Lerp(az, ay, self.health / self.maxHealth)
-        aA.Color = CFrame.identity.PointToObjectSpace(au.dyingColor, au.healthyColor, self.health / self.maxHealth)
+        aA.Color = Color3.new().Lerp(au.dyingColor, au.healthyColor, self.health / self.maxHealth)
         local aB = ar.healthBarOutline
         aB.To = az + Vector2.new(0, 1)
         aB.From = ay - Vector2.new(0, 1)
