@@ -1,0 +1,436 @@
+-- Services
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local ViewportSize = Camera.ViewportSize
+
+-- GUI Setup
+local GuiFolder = Instance.new("Folder", gethui and gethui() or game:GetService("CoreGui"))
+
+-- Math Functions
+local floor = math.floor
+local round = math.round
+local sin = math.sin
+local cos = math.cos
+
+-- Table Functions
+local tableClear = table.clear
+local tableUnpack = table.unpack
+local tableFind = table.find
+local tableCreate = table.create
+
+-- CFrame and Vector Operations
+local CFrameFromMatrix = CFrame.fromMatrix
+local WorldToViewportPoint = Camera.WorldToViewportPoint
+local PointToObjectSpace = CFrame.identity.PointToObjectSpace
+local ColorLerp = Color3.new().Lerp
+local Vector2Min = Vector2.zero.Min
+local Vector2Max = Vector2.zero.Max
+local Vector2Lerp = Vector2.zero.Lerp
+local Vector3Min = Vector3.zero.Min
+local Vector3Max = Vector3.zero.Max
+
+-- Constants
+local HEALTH_BAR_OFFSET = Vector2.new(5, 0)
+local ARROW_OFFSET = Vector2.new(3, 0)
+local TEXT_OFFSET_Y = Vector2.new(0, 1)
+local DOUBLE_TEXT_OFFSET_Y = Vector2.new(0, 2)
+local NAME_OFFSET = Vector2.new(0, 2)
+
+-- Box Corners
+local BOX_CORNERS = {
+    Vector3.new(-1, -1, -1),
+    Vector3.new(-1, 1, -1),
+    Vector3.new(-1, 1, 1),
+    Vector3.new(-1, -1, 1),
+    Vector3.new(1, -1, -1),
+    Vector3.new(1, 1, -1),
+    Vector3.new(1, 1, 1),
+    Vector3.new(1, -1, 1)
+}
+
+-- Helper Functions
+local function IsBodyPart(partName)
+    return partName == "Head" or 
+           partName:find("Torso") or 
+           partName:find("Leg") or 
+           partName:find("Arm")
+end
+
+local function CalculateCharacterBounds(parts)
+    local minBound, maxBound
+    for i = 1, #parts do
+        local part = parts[i]
+        local cframe, size = part.CFrame, part.Size
+        minBound = Vector3Min(minBound or cframe.Position, (cframe - size * 0.5).Position)
+        maxBound = Vector3Max(maxBound or cframe.Position, (cframe + size * 0.5).Position)
+    end
+    
+    local center = (minBound + maxBound) * 0.5
+    local front = Vector3.new(center.X, center.Y, maxBound.Z)
+    return CFrame.new(center, front), maxBound - minBound
+end
+
+local function WorldToScreen(position)
+    local screenPos, onScreen = WorldToViewportPoint(Camera, position)
+    return Vector2.new(screenPos.X, screenPos.Y), onScreen, screenPos.Z
+end
+
+local function CalculateBoxCorners(cframe, size)
+    local corners = tableCreate(#BOX_CORNERS)
+    for i = 1, #BOX_CORNERS do
+        corners[i] = WorldToScreen((cframe + size * 0.5 * BOX_CORNERS[i]).Position)
+    end
+    
+    local minCorner = Vector2Min(ViewportSize, tableUnpack(corners))
+    local maxCorner = Vector2Max(Vector2.zero, tableUnpack(corners))
+    
+    return {
+        corners = corners,
+        topLeft = Vector2.new(floor(minCorner.X), floor(minCorner.Y)),
+        topRight = Vector2.new(floor(maxCorner.X), floor(minCorner.Y)),
+        bottomLeft = Vector2.new(floor(minCorner.X), floor(maxCorner.Y)),
+        bottomRight = Vector2.new(floor(maxCorner.X), floor(maxCorner.Y))
+    }
+end
+
+local function RotateVector2(vector, angle)
+    local x, y = vector.X, vector.Y
+    local cosAngle, sinAngle = cos(angle), sin(angle)
+    return Vector2.new(x * cosAngle - y * sinAngle, x * sinAngle + y * cosAngle)
+end
+
+local function GetTeamColor(self, color, isOutline)
+    if color == "Team Color" or (self.interface.sharedSettings.useTeamColor and not isOutline) then
+        return self.interface.getTeamColor(self.player) or Color3.new(1, 1, 1)
+    end
+    return color
+end
+
+-- ESP Player Class
+local ESPPlayer = {}
+ESPPlayer.__index = ESPPlayer
+
+function ESPPlayer.new(player, interface)
+    local self = setmetatable({}, ESPPlayer)
+    self.player = assert(player, "Missing argument #1 (Player expected)")
+    self.interface = assert(interface, "Missing argument #2 (table expected)")
+    self:Construct()
+    return self
+end
+
+function ESPPlayer:_createDrawing(drawingType, properties)
+    local drawing = Drawing.new(drawingType)
+    for property, value in next, properties do
+        pcall(function()
+            drawing[property] = value
+        end)
+    end
+    self.drawingBin[#self.drawingBin + 1] = drawing
+    return drawing
+end
+
+function ESPPlayer:Construct()
+    self.characterCache = {}
+    self.childCount = 0
+    self.drawingBin = {}
+    
+    -- Initialize drawings
+    self.drawings = {
+        box3d = {
+            {
+                self:_createDrawing("Line", {Thickness = 1, Visible = false}),
+                self:_createDrawing("Line", {Thickness = 1, Visible = false}),
+                self:_createDrawing("Line", {Thickness = 1, Visible = false})
+            },
+            {
+                self:_createDrawing("Line", {Thickness = 1, Visible = false}),
+                self:_createDrawing("Line", {Thickness = 1, Visible = false}),
+                self:_createDrawing("Line", {Thickness = 1, Visible = false})
+            },
+            {
+                self:_createDrawing("Line", {Thickness = 1, Visible = false}),
+                self:_createDrawing("Line", {Thickness = 1, Visible = false}),
+                self:_createDrawing("Line", {Thickness = 1, Visible = false})
+            },
+            {
+                self:_createDrawing("Line", {Thickness = 1, Visible = false}),
+                self:_createDrawing("Line", {Thickness = 1, Visible = false}),
+                self:_createDrawing("Line", {Thickness = 1, Visible = false})
+            }
+        },
+        visible = {
+            tracerOutline = self:_createDrawing("Line", {Thickness = 3, Visible = false}),
+            tracer = self:_createDrawing("Line", {Thickness = 1, Visible = false}),
+            boxFill = self:_createDrawing("Square", {Filled = true, Visible = false}),
+            boxOutline = self:_createDrawing("Square", {Thickness = 3, Visible = false}),
+            box = self:_createDrawing("Square", {Thickness = 1, Visible = false}),
+            healthBarOutline = self:_createDrawing("Line", {Thickness = 3, Visible = false}),
+            healthBar = self:_createDrawing("Line", {Thickness = 1, Visible = false}),
+            healthText = self:_createDrawing("Text", {Center = true, Visible = false}),
+            name = self:_createDrawing("Text", {Text = self.player.DisplayName, Center = true, Visible = false}),
+            distance = self:_createDrawing("Text", {Center = true, Visible = false}),
+            weapon = self:_createDrawing("Text", {Center = true, Visible = false})
+        },
+        hidden = {
+            arrowOutline = self:_createDrawing("Triangle", {Thickness = 3, Visible = false}),
+            arrow = self:_createDrawing("Triangle", {Filled = true, Visible = false})
+        }
+    }
+
+    self.renderConnection = RunService.Heartbeat:Connect(function(deltaTime)
+        self:Update(deltaTime)
+        self:Render(deltaTime)
+    end)
+end
+
+function ESPPlayer:Destruct()
+    self.renderConnection:Disconnect()
+    for i = 1, #self.drawingBin do
+        self.drawingBin[i]:Remove()
+    end
+    tableClear(self)
+end
+
+function ESPPlayer:Update()
+    local interface = self.interface
+    self.options = interface.teamSettings[interface.isFriendly(self.player) and "friendly" or "enemy"]
+    self.character = interface.getCharacter(self.player)
+    self.health, self.maxHealth = interface.getHealth(self.player)
+    self.weapon = interface.getWeapon(self.player)
+    
+    self.enabled = self.options.enabled and 
+                  self.character and 
+                  not (#interface.whitelist > 0 and not tableFind(interface.whitelist, self.player.UserId))
+
+    local head = self.enabled and self.character:FindFirstChild("Head")
+    if not head then
+        self.characterCache = {}
+        self.onScreen = false
+        return
+    end
+
+    local screenPosition, isOnScreen, depth = WorldToScreen(head.Position)
+    self.onScreen = isOnScreen
+    self.distance = depth
+
+    if interface.sharedSettings.limitDistance and depth > interface.sharedSettings.maxDistance then
+        self.onScreen = false
+    end
+
+    if self.onScreen then
+        local cache = self.characterCache
+        local children = self.character:GetChildren()
+        
+        if not cache[1] or self.childCount ~= #children then
+            tableClear(cache)
+            for i = 1, #children do
+                local part = children[i]
+                if part:IsA("BasePart") and IsBodyPart(part.Name) then
+                    cache[#cache + 1] = part
+                end
+            end
+            self.childCount = #children
+        end
+        
+        self.corners = CalculateBoxCorners(CalculateCharacterBounds(cache))
+    elseif self.options.offScreenArrow then
+        local cameraCFrame = Camera.CFrame
+        local lookVector = CFrameFromMatrix(cameraCFrame.Position, cameraCFrame.RightVector, Vector3.yAxis)
+        local objectSpace = PointToObjectSpace(lookVector, head.Position)
+        self.direction = Vector2.new(objectSpace.X, objectSpace.Z).Unit
+    end
+end
+
+function ESPPlayer:Render()
+    local isOnScreen = self.onScreen or false
+    local isEnabled = self.enabled or false
+    local visibleDrawings = self.drawings.visible
+    local hiddenDrawings = self.drawings.hidden
+    local box3dDrawings = self.drawings.box3d
+    local interface = self.interface
+    local options = self.options
+    local corners = self.corners
+
+    -- Box Rendering
+    visibleDrawings.box.Visible = isEnabled and isOnScreen and options.box
+    visibleDrawings.boxOutline.Visible = visibleDrawings.box.Visible and options.boxOutline
+    
+    if visibleDrawings.box.Visible then
+        local box = visibleDrawings.box
+        box.Position = corners.topLeft
+        box.Size = corners.bottomRight - corners.topLeft
+        box.Color = GetTeamColor(self, options.boxColor[1])
+        box.Transparency = options.boxColor[2]
+
+        local boxOutline = visibleDrawings.boxOutline
+        boxOutline.Position = box.Position
+        boxOutline.Size = box.Size
+        boxOutline.Color = GetTeamColor(self, options.boxOutlineColor[1], true)
+        boxOutline.Transparency = options.boxOutlineColor[2]
+    end
+
+    -- Box Fill Rendering
+    visibleDrawings.boxFill.Visible = isEnabled and isOnScreen and options.boxFill
+    if visibleDrawings.boxFill.Visible then
+        local boxFill = visibleDrawings.boxFill
+        boxFill.Position = corners.topLeft
+        boxFill.Size = corners.bottomRight - corners.topLeft
+        boxFill.Color = GetTeamColor(self, options.boxFillColor[1])
+        boxFill.Transparency = options.boxFillColor[2]
+    end
+
+    -- Health Bar Rendering
+    visibleDrawings.healthBar.Visible = isEnabled and isOnScreen and options.healthBar
+    visibleDrawings.healthBarOutline.Visible = visibleDrawings.healthBar.Visible and options.healthBarOutline
+    
+    if visibleDrawings.healthBar.Visible then
+        local healthBarTop = corners.topLeft - HEALTH_BAR_OFFSET
+        local healthBarBottom = corners.bottomLeft - HEALTH_BAR_OFFSET
+        
+        local healthBar = visibleDrawings.healthBar
+        healthBar.To = healthBarBottom
+        healthBar.From = Vector2Lerp(healthBarBottom, healthBarTop, self.health / self.maxHealth)
+        healthBar.Color = ColorLerp(options.dyingColor, options.healthyColor, self.health / self.maxHealth)
+
+        local healthBarOutline = visibleDrawings.healthBarOutline
+        healthBarOutline.To = healthBarBottom + TEXT_OFFSET_Y
+        healthBarOutline.From = healthBarTop - TEXT_OFFSET_Y
+        healthBarOutline.Color = GetTeamColor(self, options.healthBarOutlineColor[1], true)
+        healthBarOutline.Transparency = options.healthBarOutlineColor[2]
+    end
+
+    -- Health Text Rendering
+    visibleDrawings.healthText.Visible = isEnabled and isOnScreen and options.healthText
+    if visibleDrawings.healthText.Visible then
+        local healthBarTop = corners.topLeft - HEALTH_BAR_OFFSET
+        local healthBarBottom = corners.bottomLeft - HEALTH_BAR_OFFSET
+        
+        local healthText = visibleDrawings.healthText
+        healthText.Text = round(self.health) .. "hp"
+        healthText.Size = interface.sharedSettings.textSize
+        healthText.Font = interface.sharedSettings.textFont
+        healthText.Color = GetTeamColor(self, options.healthTextColor[1])
+        healthText.Transparency = options.healthTextColor[2]
+        healthText.Outline = options.healthTextOutline
+        healthText.OutlineColor = GetTeamColor(self, options.healthTextOutlineColor, true)
+        healthText.Position = Vector2Lerp(healthBarBottom, healthBarTop, self.health / self.maxHealth) - 
+                            healthText.TextBounds * 0.5 - ARROW_OFFSET
+    end
+
+    -- Name Rendering
+    visibleDrawings.name.Visible = isEnabled and isOnScreen and options.name
+    if visibleDrawings.name.Visible then
+        local nameText = visibleDrawings.name
+        nameText.Size = interface.sharedSettings.textSize
+        nameText.Font = interface.sharedSettings.textFont
+        nameText.Color = GetTeamColor(self, options.nameColor[1])
+        nameText.Transparency = options.nameColor[2]
+        nameText.Outline = options.nameOutline
+        nameText.OutlineColor = GetTeamColor(self, options.nameOutlineColor, true)
+        nameText.Position = (corners.topLeft + corners.topRight) * 0.5 - 
+                          Vector2.yAxis * nameText.TextBounds.Y - DOUBLE_TEXT_OFFSET_Y
+    end
+
+    -- Distance Rendering
+    visibleDrawings.distance.Visible = isEnabled and isOnScreen and self.distance and options.distance
+    if visibleDrawings.distance.Visible then
+        local distanceText = visibleDrawings.distance
+        distanceText.Text = round(self.distance) .. " studs"
+        distanceText.Size = interface.sharedSettings.textSize
+        distanceText.Font = interface.sharedSettings.textFont
+        distanceText.Color = GetTeamColor(self, options.distanceColor[1])
+        distanceText.Transparency = options.distanceColor[2]
+        distanceText.Outline = options.distanceOutline
+        distanceText.OutlineColor = GetTeamColor(self, options.distanceOutlineColor, true)
+        distanceText.Position = (corners.bottomLeft + corners.bottomRight) * 0.5 + NAME_OFFSET
+    end
+
+    -- Weapon Text Rendering
+    visibleDrawings.weapon.Visible = isEnabled and isOnScreen and options.weapon
+    if visibleDrawings.weapon.Visible then
+        local weaponText = visibleDrawings.weapon
+        weaponText.Text = self.weapon
+        weaponText.Size = interface.sharedSettings.textSize
+        weaponText.Font = interface.sharedSettings.textFont
+        weaponText.Color = GetTeamColor(self, options.weaponColor[1])
+        weaponText.Transparency = options.weaponColor[2]
+        weaponText.Outline = options.weaponOutline
+        weaponText.OutlineColor = GetTeamColor(self, options.weaponOutlineColor, true)
+        weaponText.Position = (corners.bottomLeft + corners.bottomRight) * 0.5 +
+                            (visibleDrawings.distance.Visible and 
+                             NAME_OFFSET + Vector2.yAxis * visibleDrawings.distance.TextBounds.Y or 
+                             Vector2.zero)
+    end
+
+    -- Tracer Rendering
+    visibleDrawings.tracer.Visible = isEnabled and isOnScreen and options.tracer
+    visibleDrawings.tracerOutline.Visible = visibleDrawings.tracer.Visible and options.tracerOutline
+    
+    if visibleDrawings.tracer.Visible then
+        local tracer = visibleDrawings.tracer
+        tracer.Color = GetTeamColor(self, options.tracerColor[1])
+        tracer.Transparency = options.tracerColor[2]
+        tracer.To = (corners.bottomLeft + corners.bottomRight) * 0.5
+        tracer.From = options.tracerOrigin == "Middle" and ViewportSize * 0.5 or
+                     options.tracerOrigin == "Top" and ViewportSize * Vector2.new(0.5, 0) or
+                     options.tracerOrigin == "Bottom" and ViewportSize * Vector2.new(0.5, 1)
+
+        local tracerOutline = visibleDrawings.tracerOutline
+        tracerOutline.Color = GetTeamColor(self, options.tracerOutlineColor[1], true)
+        tracerOutline.Transparency = options.tracerOutlineColor[2]
+        tracerOutline.To = tracer.To
+        tracerOutline.From = tracer.From
+    end
+
+    -- Off-Screen Arrow Rendering
+    hiddenDrawings.arrow.Visible = isEnabled and not isOnScreen and options.offScreenArrow
+    hiddenDrawings.arrowOutline.Visible = hiddenDrawings.arrow.Visible and options.offScreenArrowOutline
+    
+    if hiddenDrawings.arrow.Visible and self.direction then
+        local arrow = hiddenDrawings.arrow
+        arrow.PointA = Vector2Min(Vector2Max(ViewportSize * 0.5 + 
+                                self.direction * options.offScreenArrowRadius, 
+                                Vector2.one * 25), 
+                                ViewportSize - Vector2.one * 25)
+        arrow.PointB = arrow.PointA - RotateVector2(self.direction, 0.45) * options.offScreenArrowSize
+        arrow.PointC = arrow.PointA - RotateVector2(self.direction, -0.45) * options.offScreenArrowSize
+        arrow.Color = GetTeamColor(self, options.offScreenArrowColor[1])
+        arrow.Transparency = options.offScreenArrowColor[2]
+
+        local arrowOutline = hiddenDrawings.arrowOutline
+        arrowOutline.PointA = arrow.PointA
+        arrowOutline.PointB = arrow.PointB
+        arrowOutline.PointC = arrow.PointC
+        arrowOutline.Color = GetTeamColor(self, options.offScreenArrowOutlineColor[1], true)
+        arrowOutline.Transparency = options.offScreenArrowOutlineColor[2]
+    end
+
+    -- 3D Box Rendering
+    local box3dEnabled = isEnabled and isOnScreen and options.box3d
+    for i = 1, #box3dDrawings do
+        local boxLines = box3dDrawings[i]
+        for j = 1, #boxLines do
+            local line = boxLines[j]
+            line.Visible = box3dEnabled
+            line.Color = GetTeamColor(self, options.box3dColor[1])
+            line.Transparency = options.box3dColor[2]
+        end
+        
+        if box3dEnabled then
+            local line1 = boxLines[1]
+            line1.From = corners.corners[i]
+            line1.To = corners.corners[i == 4 and 1 or i + 1]
+            
+            local line2 = boxLines[2]
+            line2.From = corners.corners[i == 4 and 1 or i + 1]
+            line2.To = corners.corners[i == 4 and 5 or i + 5]
+            
+            local line3 = boxLines[3]
+            line3.From = corners.corners[i == 4 and 5 or i + 5]
+            line3.To = corners.corners[i == 4 and 8 or i + 4]
+        end
+    end
+end
