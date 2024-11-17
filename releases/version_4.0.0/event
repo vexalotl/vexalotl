@@ -1,4 +1,11 @@
 return function(eventTab)
+
+    if not eventTab.AddButton then
+        warn("The 'eventTab' object does not support 'AddButton'.")
+        return
+    end
+
+
     eventTab:AddButton({
         Name = "Join Trade Realm",
         Callback = function()
@@ -11,10 +18,11 @@ return function(eventTab)
         end
     })
 
-eventTab:AddButton({
-        Name = "Special Event Action",
+
+    eventTab:AddButton({
+        Name = "Test Button",
         Callback = function()
-            print("Special event action executed!")
+            print("Test button clicked!")
         end
     })
 end
