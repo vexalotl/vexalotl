@@ -1,11 +1,11 @@
 return function(eventTab)
-
+    -- Ensure the object supports the expected methods
     if not eventTab.AddButton then
-        warn("The 'eventTab' object does not support 'AddButton'.")
+        warn("The 'eventTab' object does not support 'AddButton'. Check the structure.")
         return
     end
 
-
+    -- Add buttons to the event tab
     eventTab:AddButton({
         Name = "Join Trade Realm",
         Callback = function()
@@ -18,11 +18,11 @@ return function(eventTab)
         end
     })
 
-
+    -- Add another button as an example
     eventTab:AddButton({
-        Name = "Test Button",
+        Name = "Special Event Action",
         Callback = function()
-            print("Test button clicked!")
+            print("Special event action executed!")
         end
     })
 end
