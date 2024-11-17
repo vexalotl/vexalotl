@@ -1,3 +1,24 @@
-local eventTab = vexalotl:CreateTab({
-Name = "Event"
-})
+return function(eventTab)
+    -- Add a "Join Trade Realm" button
+    eventTab:AddButton({
+        Name = "Join Trade Realm",
+        Callback = function()
+            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RequestTradeRealmTeleport"):FireServer()
+            if queueteleport then
+                queueteleport(scriptToRun)
+            else
+                warn("Your executor does not support queue_on_teleport. | Vexalotl")
+            end
+        end
+    })
+
+    -- Add another button for custom functionality
+    eventTab:AddButton({
+        Name = "Special Event Action",
+        Callback = function()
+            print("Special event action executed!")
+        end
+    })
+
+    -- Add additional buttons as needed
+end
