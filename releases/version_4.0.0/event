@@ -1,0 +1,3 @@
+local eventTab = vexalotl:CreateTab({
+Name = "Event"
+})
