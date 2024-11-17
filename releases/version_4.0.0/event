@@ -1,5 +1,4 @@
 return function(eventTab)
-    -- Add a "Join Trade Realm" button
     eventTab:AddButton({
         Name = "Join Trade Realm",
         Callback = function()
@@ -12,13 +11,10 @@ return function(eventTab)
         end
     })
 
-    -- Add another button for custom functionality
-    eventTab:AddButton({
+eventTab:AddButton({
         Name = "Special Event Action",
         Callback = function()
             print("Special event action executed!")
         end
     })
-
-    -- Add additional buttons as needed
 end
