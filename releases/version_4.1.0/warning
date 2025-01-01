@@ -1,4 +1,4 @@
-local MainGui = Instance.new("ScreenGui")
+llocal MainGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
 local TextLabel_2 = Instance.new("TextLabel")
@@ -18,8 +18,8 @@ Frame.Parent = MainGui
 Frame.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
 Frame.BorderColor3 = Color3.fromRGB(22, 22, 22)
 Frame.BorderSizePixel = 10
-Frame.Position = UDim2.new(0.1, 0, 0.05, 0)
-Frame.Size = UDim2.new(0.8, 0, 0.8, 0)
+Frame.Position = UDim2.new(0.3, 0, 0.05, 0)
+Frame.Size = UDim2.new(0.4, 0, 0.8, 0)
 
 TextLabel.Parent = Frame
 TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
