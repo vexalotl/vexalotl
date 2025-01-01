@@ -369,7 +369,6 @@ function aQ.new(aa, ab)
     return self
 end
 function aQ:Construct()
-    self.highlight = Instance.new("Highlight", g)
     self.updateConnection =
         a.Heartbeat:Connect(
         function()
@@ -490,7 +489,7 @@ local aX = {
             nameOutlineColor = Color3.new(),
             weapon = false,
             weaponColor = {Color3.new(1, 1, 1), 1},
-            weaponOutline = false,
+            weaponOutline = true,
             weaponOutlineColor = Color3.new(),
             distance = true,
             distanceColor = {Color3.new(1, 1, 1), 1},
@@ -499,15 +498,15 @@ local aX = {
             tracer = false,
             tracerOrigin = "Bottom",
             tracerColor = {Color3.new(1, 1, 1), 1},
-            tracerOutline = false,
+            tracerOutline = true,
             tracerOutlineColor = {Color3.new(), 1},
             offScreenArrow = false,
             offScreenArrowColor = {Color3.new(1, 1, 1), 1},
             offScreenArrowSize = 15,
             offScreenArrowRadius = 150,
-            offScreenArrowOutline = false,
+            offScreenArrowOutline = true,
             offScreenArrowOutlineColor = {Color3.new(), 1},
-            chams = false,
+            chams = true,
             chamsVisibleOnly = false,
             chamsFillColor = {Color3.new(0.2, 0.2, 0.2), 0.5},
             chamsOutlineColor = {Color3.new(1, 0, 0), 0}
