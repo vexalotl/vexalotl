@@ -1,0 +1,129 @@
+local MainGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local TextLabel = Instance.new("TextLabel")
+local TextLabel_2 = Instance.new("TextLabel")
+local TextLabel_3 = Instance.new("TextLabel")
+local TextLabel_4 = Instance.new("TextLabel")
+local TextLabel_5 = Instance.new("TextLabel")
+local TextLabel_6 = Instance.new("TextLabel")
+local TextLabel_7 = Instance.new("TextLabel")
+local TextButton = Instance.new("TextButton")
+
+MainGui.Name = "MainGui"
+MainGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+MainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+MainGui.ResetOnSpawn = false
+
+Frame.Parent = MainGui
+Frame.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
+Frame.BorderColor3 = Color3.fromRGB(22, 22, 22)
+Frame.BorderSizePixel = 10
+Frame.Position = UDim2.new(0.1, 0, 0.05, 0)
+Frame.Size = UDim2.new(0.8, 0, 0.8, 0)
+
+TextLabel.Parent = Frame
+TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel.BackgroundTransparency = 1
+TextLabel.Position = UDim2.new(0.05, 0, 0.05, 0)
+TextLabel.Size = UDim2.new(0.9, 0, 0.1, 0)
+TextLabel.Font = Enum.Font.Unknown
+TextLabel.Text = "IMPORTANT"
+TextLabel.TextColor3 = Color3.fromRGB(255, 0, 4)
+TextLabel.TextSize = 50
+
+TextLabel_2.Parent = Frame
+TextLabel_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_2.BackgroundTransparency = 1
+TextLabel_2.Position = UDim2.new(0.05, 0, 0.2, 0)
+TextLabel_2.Size = UDim2.new(0.9, 0, 0.1, 0)
+TextLabel_2.Font = Enum.Font.Michroma
+TextLabel_2.Text = [[Before you continue, it is highly recommended that you use an 
+alternative account. Not all features are 100% undetected, 
+use your own judgement and test everything out on an 
+alternative account. You will always run the risk of getting 
+banned regardless of which script you are using, stay safe.]]
+TextLabel_2.TextColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel_2.TextSize = 25
+TextLabel_2.TextWrapped = true
+
+TextLabel_3.Parent = Frame
+TextLabel_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_3.BackgroundTransparency = 1
+TextLabel_3.Position = UDim2.new(0.05, 0, 0.35, 0)
+TextLabel_3.Size = UDim2.new(0.9, 0, 0.1, 0)
+TextLabel_3.Font = Enum.Font.Michroma
+TextLabel_3.Text = [[Прежде чем продолжить, настоятельно рекомендуется использовать 
+альтернативный аккаунт. Не все функции на 100% необнаружены, 
+используйте свое собственное суждение и проверьте все на 
+альтернативный аккаунт. Вы всегда рискуете получить 
+забанен независимо от того, какой скрипт вы используете, будьте в безопасности.]]
+TextLabel_3.TextColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel_3.TextSize = 25
+TextLabel_3.TextWrapped = true
+
+TextLabel_4.Parent = Frame
+TextLabel_4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_4.BackgroundTransparency = 1
+TextLabel_4.Position = UDim2.new(0.05, 0, 0.5, 0)
+TextLabel_4.Size = UDim2.new(0.9, 0, 0.1, 0)
+TextLabel_4.Font = Enum.Font.Michroma
+TextLabel_4.Text = [[ก่อนที่คุณจะดำเนินการต่อ ขอแนะนำอย่างยิ่งให้คุณใช้ 
+บัญชีทางเลือก คุณสมบัติบางอย่างไม่ได้ถูกตรวจพบ 100% 
+ใช้วิจารณญาณของคุณเองและทดสอบทุกอย่างใน 
+บัญชีทางเลือก คุณจะเสี่ยงต่อการได้รับเสมอ 
+ถูกแบนไม่ว่าคุณจะใช้สคริปต์ใดก็ตาม ขอให้ปลอดภัย]]
+TextLabel_4.TextColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel_4.TextSize = 25
+TextLabel_4.TextWrapped = true
+
+TextLabel_5.Parent = Frame
+TextLabel_5.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_5.BackgroundTransparency = 1
+TextLabel_5.Position = UDim2.new(0.05, 0, 0.65, 0)
+TextLabel_5.Size = UDim2.new(0.9, 0, 0.1, 0)
+TextLabel_5.Font = Enum.Font.Michroma
+TextLabel_5.Text = [[Antes de continuar, é altamente recomendável que você use um 
+conta alternativa. Nem todos os recursos são 100% não detectados, 
+use seu próprio julgamento e teste tudo em um 
+conta alternativa. Você sempre correrá o risco de ficar 
+banido independentemente de qual script você está usando, fique seguro.]]
+TextLabel_5.TextColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel_5.TextSize = 25
+TextLabel_5.TextWrapped = true
+
+TextLabel_6.Parent = Frame
+TextLabel_6.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_6.BackgroundTransparency = 1
+TextLabel_6.Position = UDim2.new(0.05, 0, 0.8, 0)
+TextLabel_6.Size = UDim2.new(0.9, 0, 0.05, 0)
+TextLabel_6.Font = Enum.Font.Michroma
+TextLabel_6.Text = "You will probably be fine anyways, just a warning. Just please, use an alt."
+TextLabel_6.TextColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel_6.TextSize = 25
+TextLabel_6.TextWrapped = true
+
+TextLabel_7.Parent = Frame
+TextLabel_7.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_7.BackgroundTransparency = 1
+TextLabel_7.Position = UDim2.new(0.05, 0, 0.87, 0)
+TextLabel_7.Size = UDim2.new(0.9, 0, 0.05, 0)
+TextLabel_7.Font = Enum.Font.Michroma
+TextLabel_7.Text = "Vexalotl Hub"
+TextLabel_7.TextColor3 = Color3.fromRGB(97, 97, 97)
+TextLabel_7.TextSize = 25
+TextLabel_7.TextWrapped = true
+
+TextButton.Parent = MainGui
+TextButton.BackgroundColor3 = Color3.fromRGB(97, 97, 97)
+TextButton.BorderColor3 = Color3.fromRGB(49, 49, 49)
+TextButton.BorderSizePixel = 5
+TextButton.Position = UDim2.new(0.4, 0, 0.79, 0)
+TextButton.Size = UDim2.new(0.2, 0, 0.05, 0)
+TextButton.Font = Enum.Font.SourceSans
+TextButton.Text = "Accept"
+TextButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+TextButton.TextSize = 25
+
+TextButton.MouseButton1Click:Connect(function()
+    MainGui:Destroy()
+end)
