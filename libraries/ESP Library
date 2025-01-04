@@ -368,6 +368,35 @@ function aQ.new(aa, ab)
     self:Construct()
     return self
 end
+function aQ:Construct()
+    self.updateConnection =
+        a.Heartbeat:Connect(
+        function()
+            self:Update()
+        end
+    )
+end
+function aQ:Destruct()
+    self.updateConnection:Disconnect()
+    self.highlight:Destroy()
+    l(self)
+end
+function aQ:Update()
+    local aR = self.highlight
+    local ab = self.interface
+    local aS = ab.getCharacter(self.player)
+    local au = ab.teamSettings[ab.isFriendly(self.player) and "friendly" or "enemy"]
+    local aq = au.enabled and aS and not (#ab.whitelist > 0 and not n(ab.whitelist, self.player.UserId))
+    aR.Enabled = aq and au.chams
+    if aR.Enabled then
+        aR.Adornee = aS
+        aR.FillColor = a6(self, au.chamsFillColor[1])
+        aR.FillTransparency = au.chamsFillColor[2]
+        aR.OutlineColor = a6(self, au.chamsOutlineColor[1], true)
+        aR.OutlineTransparency = au.chamsOutlineColor[2]
+        aR.DepthMode = au.chamsVisibleOnly and "Occluded" or "AlwaysOnTop"
+    end
+end
 local aT = {}
 aT.__index = aT
 function aT.new(aU, au)
