@@ -1,1 +1,5 @@
-
+if game.GameId == 1831550657 then
+    game.Players.LocalPlayer:Kick("\nVexalotl v4.3.0 detected\n. Please head over to https://discord.gg/vEzjJdxnWg for the latest version of Nextornal Hub.")
+else
+    warn("\nVexalotl v4.3.0 detected\n. Please head over to https://discord.gg/vEzjJdxnWg for the latest version of Nextornal Hub.")
+end
